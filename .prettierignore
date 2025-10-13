@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+build
+dist
+public/assets
+coverage
+.idea
+.vscode
+*.min.js
+*.map
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.next/cache
+.DS_Store
+**/generated/**
