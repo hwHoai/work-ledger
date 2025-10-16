@@ -10,9 +10,15 @@
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix"
   },
   "dependencies": {
+    "@heroui/system": "^2.4.23",
+    "@heroui/theme": "^2.4.23",
+    "@reduxjs/toolkit": "^2.9.0",
+    "framer-motion": "^12.23.24",
     "next": "15.5.4",
+    "qrcode.react": "^4.2.0",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "react-redux": "^9.2.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
