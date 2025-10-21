@@ -2,10 +2,12 @@ import { createSlice } from '@reduxjs/toolkit';
 
 interface WalletModalState {
   isOpen: boolean;
+  connectedWallet?: string;
 }
 
 const initialState: WalletModalState = {
   isOpen: false,
+  connectedWallet: undefined,
 };
 
 const walletModalSlice = createSlice({
@@ -21,8 +23,13 @@ const walletModalSlice = createSlice({
     toggleWalletModal: (state) => {
       state.isOpen = !state.isOpen;
     },
+    setConnectedWallet(state, action) {
+      state.connectedWallet = action.payload; // ok with RTK
+      console.log('walletModal.setConnectedWallet ->', action.payload);
+    },
   },
 });
 
-export const { openWalletModal, closeWalletModal, toggleWalletModal } = walletModalSlice.actions;
+export const { openWalletModal, closeWalletModal, toggleWalletModal, setConnectedWallet } =
+  walletModalSlice.actions;
 export default walletModalSlice.reducer;

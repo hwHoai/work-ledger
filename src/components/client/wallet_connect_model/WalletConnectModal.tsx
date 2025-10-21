@@ -3,12 +3,17 @@
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '~/store/hooks';
 import { closeWalletModal } from '~/store/walletModalSlice';
-import QRCodeMethod from '~/screen/home/components/server/QRCodeMethod';
-import MetaMaskMethod from '~/screen/home/components/server/MetaMaskMethod';
-import CoinbaseMethod from '~/screen/home/components/server/CoinbaseMethod';
-import PrivateKeyMethod from '~/screen/home/components/server/PrivateKeyMethod';
+import QRCodeMethod from '~/components/client/wallet_connect_model/QRCodeMethod';
+import MetaMaskMethod from '~/components/client/wallet_connect_model/MetaMaskMethod';
+import PrivateKeyMethod from '~/components/client/wallet_connect_model/PrivateKeyMethod';
+import { Log } from 'viem';
+import CoinbaseMethod from './CoinbaseMethod';
 
 type WalletMethod = 'QRCodeMethod' | 'MetaMaskMethod' | 'CoinbaseMethod' | 'PrivateKeyMethod';
+
+interface IWalletConnectModalProps {
+  executeContract?: (params: any) => Promise<string | Log[]>;
+}
 
 export default function WalletConnectModal() {
   const dispatch = useAppDispatch();

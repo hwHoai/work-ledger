@@ -2,10 +2,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '~/store/hooks';
 import { setActiveIndex, nextPage } from '~/store/navigationSlice';
+import { RootState } from '~/store/store';
 
 export default function Header() {
   const dispatch = useAppDispatch();
-  const activeIndex = useAppSelector((state) => state.navigation.activeIndex);
+  const activeIndex = useAppSelector((state: RootState) => state.navigation.activeIndex);
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 

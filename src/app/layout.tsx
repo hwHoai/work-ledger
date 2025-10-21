@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import StoreProvider from '~/store/StoreProvider';
-import WagmiProviderWrapper from '~/components/provider/WagmiProviderWrapper';
+import { WagmiProviderWrapper } from '~/components/provider/WagmiProviderWrapper';
+import { connectToDatabase } from '~/config/mongo.config';
+import dbConnect from '~/lib/db.connect';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -19,16 +21,19 @@ export const metadata: Metadata = {
   description: 'Blockchain-based attendance system',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  await dbConnect();
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <StoreProvider>
-          <WagmiProviderWrapper>{children}</WagmiProviderWrapper>
+          <WagmiProviderWrapper>
+            {children}
+            </WagmiProviderWrapper>
         </StoreProvider>
       </body>
     </html>

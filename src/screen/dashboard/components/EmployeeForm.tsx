@@ -1,11 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { axiosInstance } from '~/config/axios.config';
+import { useAppDispatch, useAppSelector } from '~/store/hooks';
+import { RootState } from '~/store/store';
+import { openWalletModal } from '~/store/walletModalSlice';
+import { Employee, ROLE } from '~/types/employee.type';
 
 export default function EmployeeForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
+  const dispatch = useAppDispatch();
+  const connectedWallet = useAppSelector((state: RootState) => state.walletModal.connectedWallet);
+  const isWalletModalOpen = useAppSelector((state: RootState) => state.walletModal.isOpen);
+
+  // form fields
+  const [role, setRole] = useState<ROLE>(ROLE.EMPLOYEE);
+  const [adminSecret, setAdminSecret] = useState<string>('');
+  const [empAddress, setEmpAddress] = useState<string>('');
+  const [employeeName, setEmployeeName] = useState<string>('');
+  const [formData, setFormData] = useState<any>({});
 
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -14,17 +29,26 @@ export default function EmployeeForm() {
     setSuccess('');
 
     try {
-      const employeeAddress = (e.target as any).walletAddress.value.trim();
+      if (!empAddress) throw new Error('Employee wallet address is required');
+      if (!employeeName) throw new Error('Employee name is required');
+      if (role === ROLE.ADMIN && !adminSecret) throw new Error('Admin secret is required');
 
-      if (!employeeAddress || !employeeAddress.startsWith('0x') || employeeAddress.length !== 42) {
-        throw new Error('Invalid wallet address format. Must be 42 characters starting with 0x');
-      }
+      setFormData(()=> {
+        if( role === ROLE.ADMIN ) {
+          return {
+              secretKey: adminSecret,
+              adminAddress: empAddress,
+              adminName: employeeName,
+          };
+        }
+        return {
+          senderAddress: connectedWallet,
+          employeeAddress: empAddress,
+          employeeName: employeeName,
+        };
+      })
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      setSuccess(`Employee added successfully! Mock transaction hash: 0xabc123...def456`);
-      (e.target as HTMLFormElement).reset();
+      dispatch(openWalletModal());
     } catch (err: any) {
       console.error('Error adding employee:', err);
       setError(err.message || 'Failed to add employee');
@@ -32,6 +56,39 @@ export default function EmployeeForm() {
       setLoading(false);
     }
   };
+
+  // when wallet becomes connected and empAddress is set, call contract
+  useEffect(() => {
+    if (isWalletModalOpen) {
+      return;
+    }
+
+    if (!connectedWallet || !formData) return;
+
+    const execute = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        console.log('Form data to submit:', formData);
+        const newEmployee = await axiosInstance
+          .post<Employee>(`${role}`, formData)
+          .then((res) => res.data);
+        setSuccess(
+          `Employee ${newEmployee.walletAddress} name ${newEmployee.name} added successfully!`,
+        );
+        setEmpAddress('');
+        setEmployeeName('');
+        setFormData({});
+      } catch (err: any) {
+        console.error('Contract write failed:', err);
+        setError('Contract write failed: ' + (err?.message ?? String(err)));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    execute();
+  }, [isWalletModalOpen]);
 
   return (
     <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
@@ -46,6 +103,8 @@ export default function EmployeeForm() {
             <input
               type="text"
               id="walletAddress"
+              value={empAddress}
+              onChange={(e) => setEmpAddress(e.target.value)}
               name="walletAddress"
               placeholder="0x..."
               disabled={loading}
@@ -53,52 +112,107 @@ export default function EmployeeForm() {
             />
           </div>
 
-          <div className="flex gap-4 items-end justify-center">
-            <button
-              type="submit"
+          <div className="flex-1">
+            <label htmlFor="employeeName" className="block text-sm font-medium text-gray-700 mb-2">
+              Employee Name
+            </label>
+            <input
+              type="text"
+              id="employeeName"
+              name="employeeName"
+              value={employeeName}
+              onChange={(e) => setEmployeeName(e.target.value)}
+              placeholder="John Doe"
               disabled={loading}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 px-4 rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none min-w-[140px]"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <svg
-                    className="animate-spin h-5 w-5"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Adding...
-                </span>
-              ) : (
-                'Add Employee'
-              )}
-            </button>
-            <button
-              type="reset"
-              disabled={loading}
-              onClick={() => {
-                setError('');
-                setSuccess('');
-              }}
-              className="px-4 py-3 rounded-lg border-2 h-12 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Clear
-            </button>
+              className="w-full h-12 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50"
+            />
           </div>
+
+          <div className="flex-1">
+            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
+              Role
+            </label>
+            <select
+              id="role"
+              name="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value as ROLE)}
+              disabled={loading}
+              className="w-full h-12 px-4 py-3 rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+            >
+              <option value={ROLE.EMPLOYEE}>Employee</option>
+              <option value={ROLE.ADMIN}>Admin</option>
+            </select>
+          </div>
+        </div>
+
+        {/* admin secret only visible when role === ADMIN */}
+        {role === ROLE.ADMIN && (
+          <div className="flex-1">
+            <label htmlFor="adminSecret" className="block text-sm font-medium text-gray-700 mb-2">
+              Admin Secret Key
+            </label>
+            <input
+              type="password"
+              id="adminSecret"
+              value={adminSecret}
+              onChange={(e) => setAdminSecret(e.target.value)}
+              name="adminSecret"
+              placeholder="Create admin secret key"
+              disabled={loading}
+              className="w-full h-12 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all text-sm"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              This secret will be required to validate admin creation (UI-only).
+            </p>
+          </div>
+        )}
+
+        <div className="flex gap-4 items-end justify-center">
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 px-4 rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none min-w-[140px]"
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg
+                  className="animate-spin h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Adding...
+              </span>
+            ) : (
+              'Add Employee'
+            )}
+          </button>
+          <button
+            type="reset"
+            disabled={loading}
+            onClick={() => {
+              setError('');
+              setSuccess('');
+            }}
+            className="px-4 py-3 rounded-lg border-2 h-12 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Clear
+          </button>
         </div>
 
         {error && (
@@ -169,6 +283,7 @@ export default function EmployeeForm() {
           Employee wallet address will be securely stored on the blockchain
         </p>
       </form>
+      {/* Wallet Connect Modal Triggered */}
     </div>
   );
 }

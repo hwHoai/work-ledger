@@ -1,59 +1,91 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { axiosInstance } from '~/config/axios.config';
+import { Employee } from '~/types/employee.type';
+import EmployeeListSkeleton from './EmployeeListSkeleton';
+import { Copy } from 'lucide-react';
 
 export default function EmployeeList() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Sample employee data - you'll replace this with real data later
-  const employees = [
-    {
-      wallet: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
-      name: 'John Doe',
-      startWorkDate: '2023-01-15',
-      isActive: true,
-      endWorkDate: null,
-    },
-    {
-      wallet: '0x8ba1f109551bd432803012645ac136ddd64dba72',
-      name: 'Jane Smith',
-      startWorkDate: '2023-03-20',
-      isActive: true,
-      endWorkDate: null,
-    },
-    {
-      wallet: '0x5aeda56215b167893e80b4fe645ba6d5bab767de',
-      name: 'Mike Johnson',
-      startWorkDate: '2022-11-10',
-      isActive: false,
-      endWorkDate: '2024-12-31',
-    },
-    {
-      wallet: '0x2546bcd3c84621e976d8185a91a922ae77ecec30',
-      name: 'Sarah Williams',
-      startWorkDate: '2024-02-01',
-      isActive: true,
-      endWorkDate: null,
-    },
-  ];
+  // track last copied wallet to show feedback
+  const [copiedWallet, setCopiedWallet] = useState<string | null>(null);
 
-  // Filter employees based on search query
-  const filteredEmployees = employees.filter((employee) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      employee.name.toLowerCase().includes(query) ||
-      employee.wallet.toLowerCase().includes(query) ||
-      employee.startWorkDate.includes(query) ||
-      (employee.isActive ? 'active' : 'inactive').includes(query)
-    );
-  });
+  const skeletonRows = 8;
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const response = await axiosInstance.get('/employee/getAll');
+        const employees: Employee[] = response.data.map((emp: any) => ({
+          id: emp.id ?? emp._id ?? '',
+          walletAddress: emp.walletAddress,
+          name: emp.name,
+          startWorkDate: emp.startWorkDate,
+          isActive: emp.isActive,
+          endWorkDate: emp.endWorkDate,
+        }));
+        setEmployees(employees);
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+        setEmployees([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    const lowercasedQuery = searchQuery.toLowerCase();
+    const filtered = employees.filter((employee) => {
+      return (
+        (employee.id ?? '').toLowerCase().includes(lowercasedQuery) ||
+        employee.walletAddress?.toLowerCase().includes(lowercasedQuery) ||
+        (employee.name ?? '').toLowerCase().includes(lowercasedQuery) ||
+        employee.startWorkDate?.toString().toLowerCase().includes(lowercasedQuery) ||
+        (employee.isActive ? 'active' : 'inactive').includes(lowercasedQuery)
+      );
+    });
+    setFilteredEmployees(filtered);
+    console.log('Rendering EmployeeList with employees:', employees);
+  }, [searchQuery, employees]);
+
+  // copy helper with fallback
+  const handleCopy = async (address?: string) => {
+    if (!address) return;
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(address);
+      } else {
+        // fallback: textarea selection
+        const ta = document.createElement('textarea');
+        ta.value = address;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      setCopiedWallet(address);
+      setTimeout(() => setCopiedWallet(null), 2000);
+    } catch (err) {
+      console.error('Copy failed', err);
+    }
+  };
 
   return (
     <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 flex flex-col">
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold">Employee Management</h2>
         <div className="text-sm text-gray-600">
-          Total: <span className="font-bold text-blue-600">{filteredEmployees.length}</span>{' '}
+          Total:{' '}
+          <span className="font-bold text-blue-600">
+            {loading ? '...' : filteredEmployees.length}
+          </span>{' '}
           employees
         </div>
       </div>
@@ -63,10 +95,13 @@ export default function EmployeeList() {
         <div className="relative w-1/3">
           <input
             type="text"
-            placeholder="Search by name, wallet address, date, or status..."
+            placeholder={
+              loading ? 'Loading...' : 'Search by id, name, wallet address, date, or status...'
+            }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-3 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            disabled={loading}
+            className="w-full px-4 py-3 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-60"
           />
           <svg
             className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
@@ -90,6 +125,9 @@ export default function EmployeeList() {
           <thead>
             <tr className="border-b-2 border-gray-200">
               <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm uppercase tracking-wider">
+                ID
+              </th>
+              <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm uppercase tracking-wider">
                 Wallet Address
               </th>
               <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm uppercase tracking-wider">
@@ -106,44 +144,76 @@ export default function EmployeeList() {
               </th>
             </tr>
           </thead>
+
           <tbody>
-            {filteredEmployees.map((employee, index) => (
-              <tr
-                key={employee.wallet}
-                className={`border-b border-gray-100 hover:bg-blue-50 transition-colors ${
-                  index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'
-                }`}
-              >
-                <td className="py-4 px-4">
-                  <span className="font-mono text-xs text-gray-700">
-                    {employee.wallet.slice(0, 6)}...{employee.wallet.slice(-4)}
-                  </span>
-                </td>
-                <td className="py-4 px-4">
-                  <span className="font-medium text-gray-900">{employee.name}</span>
-                </td>
-                <td className="py-4 px-4">
-                  <span className="text-sm text-gray-700">{employee.startWorkDate}</span>
-                </td>
-                <td className="py-4 px-4">
-                  <span
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                      employee.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}
-                  >
-                    {employee.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className="py-4 px-4">
-                  <span className="text-sm text-gray-600">{employee.endWorkDate || '-'}</span>
-                </td>
-              </tr>
-            ))}
+            {loading ? (
+              <EmployeeListSkeleton rows={skeletonRows} />
+            ) : (
+              filteredEmployees.map((employee, index) => (
+                <tr
+                  key={employee.id || index}
+                  className={`border-b border-gray-100 hover:bg-blue-50 transition-colors ${
+                    index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'
+                  }`}
+                >
+                  <td className="py-4 px-4">
+                    <span className="font-mono text-xs text-gray-700">{employee.id ?? '-'}</span>
+                  </td>
+
+                  <td className="py-4 px-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs text-gray-700 select-all">
+                        {employee.walletAddress?.slice(0, 6)}...{employee.walletAddress?.slice(-4)}
+                      </span>
+
+                      <button
+                        onClick={() => handleCopy(employee.walletAddress)}
+                        title="Copy wallet address"
+                        aria-label="Copy wallet address"
+                        className="p-1 rounded-md hover:bg-gray-100 hover:cursor-pointer transition-colors"
+                      >
+                        <Copy size={'16px'} />
+                      </button>
+
+                      {copiedWallet === employee.walletAddress && (
+                        <span className="text-xs text-green-600 ml-1">Copied</span>
+                      )}
+                    </div>
+                  </td>
+
+                  <td className="py-4 px-4">
+                    <span className="text-sm text-gray-700">{employee.name ?? '-'}</span>
+                  </td>
+
+                  <td className="py-4 px-4">
+                    <span className="text-sm text-gray-700">
+                      {employee.startWorkDate?.toLocaleString?.() ?? employee.startWorkDate}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4">
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                        employee.isActive
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}
+                    >
+                      {employee.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4">
+                    <span className="text-sm text-gray-600">
+                      {employee.endWorkDate?.toLocaleString?.() || '-'}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
 
         {/* Empty State - No Results */}
-        {filteredEmployees.length === 0 && searchQuery && (
+        {!loading && filteredEmployees.length === 0 && searchQuery && (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🔍</div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No employees found</h3>
@@ -152,7 +222,7 @@ export default function EmployeeList() {
         )}
 
         {/* Empty State - No Employees */}
-        {employees.length === 0 && (
+        {!loading && employees.length === 0 && (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">👥</div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No employees yet</h3>

@@ -1,26 +1,81 @@
 'use client';
 
 import { QRCodeSVG } from 'qrcode.react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { useAppDispatch } from '~/store/hooks';
+import { closeWalletModal, setConnectedWallet } from '~/store/walletModalSlice';
 
 export default function QRCodeMethod() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [showQR, setShowQR] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [connectUri, setConnectUri] = useState<string>(''); // State to hold the connection URI
+  const { connectAsync, connectors, isPending, isSuccess } = useConnect();
+  const walletConnectConnector = connectors.find((c: { id: string }) => c.id === 'walletConnect');
+  const { disconnectAsync } = useDisconnect();
+  const dispatch = useAppDispatch();
 
-  // Mock QR code URI for demo
-  const mockUri =
-    'wc:7f6e504bfad60b485450578e05678ed3e8e8c4751d3c6160be17160b63ec4f8f@2?relay-protocol=irn&symKey=587d5484ce2a2a6ee3ba1962fdd7e8588e06200c46823bd18fec59e7cd282f09';
+  const isUriExpired = (uri: string) => {
+    const expTime = uri.split('expiryTimestamp=')[1];
+    if (expTime) {
+      return Date.now() > Number(expTime) * 1000;
+    }
+  };
+  useEffect(() => {
+
+    if (!walletConnectConnector) {
+      setError('There was an error to get the QR Code. Please try again later !');
+      setIsLoading(false);
+      return;
+    }
+
+    const handleMessage = ({
+      type,
+      data,
+    }: (typeof walletConnectConnector.emitter.on.arguments)[0]) => {
+      if (type === 'display_uri') {
+        console.log('Received URI:', data);
+        setConnectUri(data);
+        setIsLoading(false);
+      }
+    };
+
+    const handleConnectSuccess = async (data: any) => {
+      console.log('Connected successfully with data:', data);
+      dispatch(setConnectedWallet(data.accounts[0]));
+      setTimeout(() => {
+        setIsLoading(false);
+        dispatch(closeWalletModal());
+      }, 1000);
+    };
+
+    const handleDisconnect = () => {
+      dispatch(setConnectedWallet(undefined));
+      console.log('Disconnected');
+    };
+
+    walletConnectConnector.emitter.on('message', handleMessage);
+    walletConnectConnector.emitter.on('connect', handleConnectSuccess);
+    walletConnectConnector.emitter.on('disconnect', handleDisconnect);
+
+    (async () => {
+      await disconnectAsync();
+      await connectAsync({ connector: walletConnectConnector });
+    })();
+    return () => {
+      walletConnectConnector.emitter.off('message', handleMessage);
+      walletConnectConnector.emitter.off('connect', handleConnectSuccess);
+      walletConnectConnector.emitter.off('disconnect', handleDisconnect);
+    };
+  }, []);
 
   const handleRefresh = () => {
-    setShowQR(false);
     setIsLoading(true);
     setError('');
 
     // Simulate loading
     setTimeout(() => {
       setIsLoading(false);
-      setShowQR(true);
     }, 1500);
   };
 
@@ -86,24 +141,19 @@ export default function QRCodeMethod() {
                   <p className="text-sm text-gray-500">Please wait a moment...</p>
                 </div>
               </div>
-            ) : showQR ? (
+            ) : (
               // QR Code Display
               <div className="flex flex-col items-center gap-4">
                 {/* QR Code with white background */}
                 <div className="p-4 bg-white rounded-2xl shadow-lg">
                   <QRCodeSVG
-                    value={mockUri}
+                    value={connectUri || 'https://example.com/wallet-connect'}
                     size={224}
                     level="H"
                     bgColor="#ffffff"
                     fgColor="#000000"
                   />
                 </div>
-              </div>
-            ) : (
-              // Idle state
-              <div className="text-center text-gray-500">
-                <p className="text-sm">Initializing...</p>
               </div>
             )}
           </div>
@@ -118,7 +168,7 @@ export default function QRCodeMethod() {
       </div>
 
       {/* Refresh button */}
-      {!error && showQR && (
+      {!error && (
         <button
           onClick={handleRefresh}
           className="mt-6 group flex items-center gap-2 px-6 py-2.5 bg-white border-2 border-gray-200 text-gray-700 font-medium rounded-xl hover:border-pink-300 hover:bg-pink-50 transition-all"
