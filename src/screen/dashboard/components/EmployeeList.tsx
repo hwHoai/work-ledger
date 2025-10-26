@@ -52,12 +52,14 @@ export default function EmployeeList() {
       );
     });
     setFilteredEmployees(filtered);
-    console.log('Rendering EmployeeList with employees:', employees);
+      console.warn('Rendering EmployeeList with employees:', employees);
   }, [searchQuery, employees]);
 
   // copy helper with fallback
   const handleCopy = async (address?: string) => {
-    if (!address) return;
+    if (!address) {
+      return;
+    }
     try {
       if (navigator?.clipboard?.writeText) {
         await navigator.clipboard.writeText(address);
@@ -172,7 +174,7 @@ export default function EmployeeList() {
                         aria-label="Copy wallet address"
                         className="p-1 rounded-md hover:bg-gray-100 hover:cursor-pointer transition-colors"
                       >
-                        <Copy size={'16px'} />
+                        <Copy size="16px" />
                       </button>
 
                       {copiedWallet === employee.walletAddress && (

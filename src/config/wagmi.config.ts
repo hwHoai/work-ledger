@@ -18,7 +18,7 @@ import { walletConnect } from 'wagmi/connectors';
 // });
 
 export const clientConfig = createConfig({
-  chains: [ sepolia],
+  chains: [sepolia],
   connectors: [
     injected(),
     walletConnect({
@@ -33,7 +33,7 @@ export const clientConfig = createConfig({
 });
 
 export const serverConfig = createConfig({
-  chains: [ sepolia],
+  chains: [sepolia],
   connectors: [injected()],
   transports: {
     [sepolia.id]: http(process.env.NEXT_PUBLIC_SEPOLIA_TEST_RPC_URL!),

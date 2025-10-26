@@ -10,12 +10,24 @@ interface ToastProps {
 
 export default function Toast({ message, visible, type = 'info', onClose }: ToastProps) {
   useEffect(() => {
-    if (!visible) return;
-    const t = setTimeout(() => onClose && onClose(), 3000);
-    return () => clearTimeout(t);
+    let t: ReturnType<typeof setTimeout> | null = null;
+    if (visible) {
+      t = setTimeout(() => {
+        if (onClose) {
+          onClose();
+        }
+      }, 3000);
+    }
+    return () => {
+      if (t) {
+        clearTimeout(t);
+      }
+    };
   }, [visible, onClose]);
 
-  if (!visible) return null;
+  if (!visible) {
+    return null;
+  }
 
   const base =
     'fixed right-6 bottom-6 z-50 px-4 py-2 rounded-xl shadow-lg text-sm flex items-center gap-3';

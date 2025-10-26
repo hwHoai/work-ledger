@@ -1,20 +1,21 @@
 import { employeeService } from '~/services/employee.service';
-import { ROLE } from '~/types/employee.type';
+import { NextRequest } from 'next/server';
 
-export interface POSTAdminRequestBodyDTO extends Request {
-    secretKey: string;
-    adminAddress: string;
-    adminName: string;
-}
+export const POST = async (request: NextRequest) => {
+  const reqBody = await request.json().catch(() => null);
+  if (!reqBody) {
+    return new Response(JSON.stringify({ message: 'Invalid JSON body' }), { status: 400 });
+  }
 
-export const POST = async (request: POSTAdminRequestBodyDTO) => {
-  const reqBody = await request.json();
   try {
     const newEmployee = await employeeService.addAdmin(reqBody);
     return new Response(JSON.stringify(newEmployee), { status: 201 });
-  } catch (error: { code?: any; message?: string } | any) {
-    return new Response(error.message || 'Failed to create admin', {
-      status: error.code || 500,
-    });
+  } catch (error: any) {
+    const status =
+      typeof error?.status === 'number' && error.status >= 100 && error.status <= 599
+        ? error.status
+        : 500;
+    const message = error?.message || 'Failed to create admin';
+    return new Response(JSON.stringify({ message }), { status });
   }
 };

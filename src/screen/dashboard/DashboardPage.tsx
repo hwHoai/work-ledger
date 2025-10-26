@@ -15,7 +15,7 @@ export default function DashboardPage() {
 
         <div className="flex flex-col gap-8">
           {/* Add Employee Form */}
-          <EmployeeForm/>
+          <EmployeeForm />
 
           {/* Employee List */}
           <EmployeeList />

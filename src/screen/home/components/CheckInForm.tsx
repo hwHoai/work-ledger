@@ -63,7 +63,7 @@ export default function CheckInForm() {
     abi: [EVENT_ABI.EMPLOYEE_CHECKED_IN_ABI],
     eventName: 'CheckedIn',
     onLogs: async (logs: any[]) => {
-      console.log('Employee Checked In Event Logs:', logs);
+      console.warn('Employee Checked In Event Logs:', logs);
       try {
         Promise.all(
           logs.map(async (log) => {
@@ -80,7 +80,7 @@ export default function CheckInForm() {
             } as any);
           }),
         );
-        setIsSuccess(true);
+  setIsSuccess(true);
         setIsError(false);
         setTxConfirmed(true);
         setToast({ visible: true, message: 'Check-in confirmed', type: 'success' });
@@ -109,24 +109,34 @@ export default function CheckInForm() {
   });
 
   useEffect(() => {
-    if (isWalletModalOpen) return;
-    if (!connectedWallet) return;
-    if (!isConnected) return;
+    if (isWalletModalOpen) {
+      return;
+    }
+    if (!connectedWallet) {
+      return;
+    }
+    if (!isConnected) {
+      return;
+    }
 
     try {
       (async () => {
         setIsCheckingIn(true);
-        if (!simulateContract?.data?.request) return;
+        if (!simulateContract?.data?.request) {
+          return;
+        }
         await writeContractAsync(simulateContract.data?.request);
       })();
     } catch (error) {
       console.error('Check-in failed:', error);
       setIsCheckingIn(false);
     }
-  }, [isWalletModalOpen]);
+  }, [isWalletModalOpen, connectedWallet, isConnected, simulateContract, writeContractAsync]);
 
   const handleSubmit = async (e?: React.SyntheticEvent) => {
-    if (e) e.preventDefault();
+    if (e) {
+      e.preventDefault();
+    }
     if (!connectedWallet) {
       dispatch(openWalletModal());
       return;
@@ -367,7 +377,10 @@ export default function CheckInForm() {
             </a>
           )}
           <div className="flex items-center gap-2 mt-2">
-            <button onClick={() => dispatch(setActiveIndex(1))} className="px-3 py-1 bg-green-600 text-white rounded-md text-sm">
+            <button
+              onClick={() => dispatch(setActiveIndex(1))}
+              className="px-3 py-1 bg-green-600 text-white rounded-md text-sm"
+            >
               View Attendance
             </button>
             <button

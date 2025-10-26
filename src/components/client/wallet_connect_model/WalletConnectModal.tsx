@@ -6,18 +6,19 @@ import { closeWalletModal } from '~/store/walletModalSlice';
 import QRCodeMethod from '~/components/client/wallet_connect_model/QRCodeMethod';
 import MetaMaskMethod from '~/components/client/wallet_connect_model/MetaMaskMethod';
 import PrivateKeyMethod from '~/components/client/wallet_connect_model/PrivateKeyMethod';
-import { Log } from 'viem';
+// 'Log' import removed because it's unused in this module
 import CoinbaseMethod from './CoinbaseMethod';
 import { WalletMethod } from '~/types/wallet-connect-methods';
 import { CONNECT_MODEL_CONSTANTS } from '~/config/constants/connect-model.const';
-
 
 export default function WalletConnectModal() {
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector((state) => state.walletModal.isOpen);
   const [selectedMethod, setSelectedMethod] = useState<WalletMethod>('QRCodeMethod');
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   const handleClose = () => {
     dispatch(closeWalletModal());
@@ -26,7 +27,7 @@ export default function WalletConnectModal() {
   const handleMethodSelect = (method: WalletMethod) => {
     setSelectedMethod(method);
   };
-  
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
       <div

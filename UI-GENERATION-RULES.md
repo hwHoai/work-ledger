@@ -116,7 +116,7 @@ Dev rules (implementation choices)
 - **Page-specific components**: Components used only by a specific page must be placed in a `components/` folder within that page's directory.
   - Example: `src/app/dashboard/components/` for components specific to the dashboard page.
   - Apply the same SSR/CSR separation rules within page-specific component folders (use subfolders `ui/`, `server/`, `client/` if needed, or use naming suffixes).
-  
+
 ### Rules for Server vs Client Components
 
 - **Server Components**:

@@ -88,7 +88,8 @@ const AttendancePage: React.FC = () => {
       });
     return sortedGrouped;
   };
-  const [records, setRecords] = useState<NormalizedCheckInRecord[]>([]);
+  // records state kept only if needed later; remove to avoid unused variable warnings
+  // const [records, setRecords] = useState<NormalizedCheckInRecord[]>([]);
   const [groupedRecords, setGroupedRecords] = useState<GroupedRecords>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,18 +98,21 @@ const AttendancePage: React.FC = () => {
   const [query, setQuery] = useState('');
 
   const filteredGrouped = React.useMemo(() => {
-    if (!query.trim()) return groupedRecords;
+    if (!query.trim()) {
+      return groupedRecords;
+    }
     const q = query.toLowerCase();
     const out: GroupedRecords = {};
     Object.entries(groupedRecords).forEach(([date, recs]) => {
-      const matches = recs.filter(
-        (r) =>
-          r.employeeName.toLowerCase().includes(q) ||
-          r.employeeId.toLowerCase().includes(q) ||
-          r.walletAddress.toLowerCase().includes(q) ||
-          r.transactionHash.toLowerCase().includes(q),
+      const matches = recs.filter((r) =>
+        r.employeeName.toLowerCase().includes(q) ||
+        r.employeeId.toLowerCase().includes(q) ||
+        r.walletAddress.toLowerCase().includes(q) ||
+        r.transactionHash.toLowerCase().includes(q),
       );
-      if (matches.length) out[date] = matches;
+      if (matches.length) {
+        out[date] = matches;
+      }
     });
     return out;
   }, [groupedRecords, query]);
@@ -150,10 +154,9 @@ const AttendancePage: React.FC = () => {
       setLoading(true);
       const response = await axiosInstance.get('/employee/checkin');
       const data: CheckInRecordRaw[] = response.data;
-      const normalized = normalizeRecords(data);
-      // Defensive overall sort: newest check-ins first
-      normalized.sort((a, b) => b.checkInTime.getTime() - a.checkInTime.getTime());
-      setRecords(normalized);
+  const normalized = normalizeRecords(data);
+  // Defensive overall sort: newest check-ins first
+  normalized.sort((a, b) => b.checkInTime.getTime() - a.checkInTime.getTime());
       const grouped = groupRecordsByDate(normalized);
       setGroupedRecords(grouped);
       setToast({ visible: true, message: 'Records refreshed', type: 'info' });

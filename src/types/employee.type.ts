@@ -7,9 +7,9 @@ export type Employee = {
   isDeleted?: boolean;
   startWorkDate: Date;
   endWorkDate?: Date | null;
-}
+};
 
 export enum ROLE {
-  ADMIN = "admin",
-  EMPLOYEE = "employee",
+  ADMIN = 'admin',
+  EMPLOYEE = 'employee',
 }

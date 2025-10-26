@@ -1,4 +1,4 @@
-import { WalletMethod } from "~/types/wallet-connect-methods";
+import { WalletMethod } from '~/types/wallet-connect-methods';
 
 export class CONNECT_MODEL_CONSTANTS {
   static readonly SUPPORTED_METHODS = [
@@ -12,7 +12,7 @@ export class CONNECT_MODEL_CONSTANTS {
       id: 'MetaMaskMethod' as WalletMethod,
       name: 'MetaMask',
       icon: '🦊',
-      disabled: false,
+      disabled: true,
     },
     {
       id: 'CoinbaseMethod' as WalletMethod,

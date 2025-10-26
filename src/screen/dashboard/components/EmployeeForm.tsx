@@ -31,9 +31,15 @@ export default function EmployeeForm() {
     setSuccess('');
 
     try {
-      if (!empAddress) throw new Error('Employee wallet address is required');
-      if (!employeeName) throw new Error('Employee name is required');
-      if (role === ROLE.ADMIN && !adminSecret) throw new Error('Admin secret is required');
+      if (!empAddress) {
+        throw new Error('Employee wallet address is required');
+      }
+      if (!employeeName) {
+        throw new Error('Employee name is required');
+      }
+      if (role === ROLE.ADMIN && !adminSecret) {
+        throw new Error('Admin secret is required');
+      }
 
       // include a submissionId so the effect can reliably detect a new submission
       setFormData(() => {
@@ -67,9 +73,15 @@ export default function EmployeeForm() {
   useEffect(() => {
     // Only proceed when the wallet modal is closed, wallet is connected,
     // and we have a formData with a submissionId (to avoid accidental runs).
-    if (isWalletModalOpen) return;
-    if (!isConnected || !connectedWallet) return;
-    if (!formData || typeof formData !== 'object' || !('submissionId' in formData)) return;
+    if (isWalletModalOpen) {
+      return;
+    }
+    if (!isConnected || !connectedWallet) {
+      return;
+    }
+    if (!formData || typeof formData !== 'object' || !('submissionId' in formData)) {
+      return;
+    }
 
     const execute = async () => {
       setLoading(true);

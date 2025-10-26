@@ -31,7 +31,7 @@ if (!cached) {
 
 async function dbConnect() {
   if (cached?.conn) {
-    console.log('Using cached database connection');
+    console.warn('Using cached database connection');
     return cached.conn;
   }
   if (!cached.promise) {
@@ -40,16 +40,20 @@ async function dbConnect() {
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
-      console.log('New database connection established');
+      console.warn('New database connection established');
       return mongooseInstance;
     });
   }
 
   try {
-    if (cached === undefined) throw new Error('Cached mongoose is undefined');
+    if (cached === undefined) {
+      throw new Error('Cached mongoose is undefined');
+    }
     cached.conn = await cached.promise;
   } catch (e) {
-    if (cached === undefined) throw new Error('Cached mongoose is undefined');
+    if (cached === undefined) {
+      throw new Error('Cached mongoose is undefined');
+    }
     cached.promise = null;
     throw e;
   }

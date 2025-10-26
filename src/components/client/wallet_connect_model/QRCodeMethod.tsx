@@ -17,7 +17,7 @@ export default function QRCodeMethod() {
 
   const handleMessage = useCallback((event: { type: string; data?: unknown; uid: string }) => {
     if (event.type === 'display_uri' && typeof event.data === 'string') {
-      console.log('Received connect URI:', event.data);
+      console.warn('Received connect URI:', event.data);
       setConnectUri(event.data);
       setIsLoading(false);
     }
@@ -29,13 +29,14 @@ export default function QRCodeMethod() {
       setIsLoading(false);
       dispatch(closeWalletModal());
     }, 1000);
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (!walletConnectConnector) {
       setError('There was an error to get the QR Code. Please try again later !');
       setIsLoading(false);
-      return;
+      // return an empty cleanup to keep consistent-return (always return a function)
+      return () => {};
     }
     walletConnectConnector.emitter.on('message', handleMessage);
     walletConnectConnector.emitter.on('connect', handleConnectSuccess);
@@ -49,7 +50,8 @@ export default function QRCodeMethod() {
       walletConnectConnector.emitter.off('message', handleMessage);
       walletConnectConnector.emitter.off('connect', handleConnectSuccess);
     };
-  }, []);
+    // include dependencies used inside effect
+  }, [walletConnectConnector, disconnectAsync, connectAsync, handleMessage, handleConnectSuccess]);
 
   const handleRefresh = async () => {
     setIsLoading(true);

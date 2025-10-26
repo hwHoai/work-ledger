@@ -1,5 +1,4 @@
-import { POSTAdminRequestBodyDTO } from '~/app/api/v1/admin/route';
-import { POSTEmployeeRequestBodyDTO } from '~/app/api/v1/employee/route';
+// (Don't import route DTO types here) Use local/any types for incoming request bodies from API routes.
 import CheckInRecordsModel from '~/model/schema/checkInRecords.schema';
 import EmployeeModel from '~/model/schema/employee.schema';
 import { Employee, ROLE } from '~/types/employee.type';
@@ -69,7 +68,7 @@ class EmployeeService {
     return employees;
   }
 
-  async addEmployee(reqBody: POSTEmployeeRequestBodyDTO): Promise<Employee> {
+  async addEmployee(reqBody: any): Promise<Employee> {
     const { senderAddress, employeeAddress, employeeName } = reqBody;
 
     const isEmployeeExist = await EmployeeModel.findOne({
@@ -131,8 +130,8 @@ class EmployeeService {
     return newEmployee;
   }
 
-  async addAdmin(reqBody: POSTAdminRequestBodyDTO): Promise<Employee> {
-    const { secretKey, adminAddress, adminName } = reqBody as any;
+  async addAdmin(reqBody: any): Promise<Employee> {
+    const { secretKey, adminAddress, adminName } = reqBody;
 
     // validate creation key from env
     const expected = process.env.CREATE_ADMIN_KEY;

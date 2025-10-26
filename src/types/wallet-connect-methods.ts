@@ -1,1 +1,5 @@
-export type WalletMethod = 'QRCodeMethod' | 'MetaMaskMethod' | 'CoinbaseMethod' | 'PrivateKeyMethod';
+export type WalletMethod =
+  | 'QRCodeMethod'
+  | 'MetaMaskMethod'
+  | 'CoinbaseMethod'
+  | 'PrivateKeyMethod';
