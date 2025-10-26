@@ -1,3 +1,4 @@
+'use client';
 export default function CompanyIntro() {
   return (
     <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 md:p-10 flex flex-col justify-center overflow-y-auto max-h-full">
