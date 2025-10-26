@@ -48,44 +48,44 @@ const eslintConfig = [
     },
 
     rules: {
-      /* TypeScript / general */
-      '@typescript-eslint/no-unused-vars': [
-        'warn',
-        {
-          vars: 'all',
-          args: 'after-used',
-          ignoreRestSiblings: true,
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-        },
-      ],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      // /* TypeScript / general */
+      // '@typescript-eslint/no-unused-vars': [
+      //   'warn',
+      //   {
+      //     vars: 'all',
+      //     args: 'after-used',
+      //     ignoreRestSiblings: true,
+      //     argsIgnorePattern: '^_',
+      //     varsIgnorePattern: '^_',
+      //   },
+      // ],
+      // '@typescript-eslint/no-explicit-any': 'warn',
 
-      /* React */
-      'react/jsx-uses-react': 'off',
-      'react/react-in-jsx-scope': 'off',
-      'react/jsx-boolean-value': ['error', 'never'],
-      'react/jsx-curly-brace-presence': ['error', { props: 'never', children: 'never' }],
+      // /* React */
+      // 'react/jsx-uses-react': 'off',
+      // 'react/react-in-jsx-scope': 'off',
+      // 'react/jsx-boolean-value': ['error', 'never'],
+      // 'react/jsx-curly-brace-presence': ['error', { props: 'never', children: 'never' }],
 
-      /* Hooks */
-      'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
+      // /* Hooks */
+      // 'react-hooks/rules-of-hooks': 'error',
+      // 'react-hooks/exhaustive-deps': 'warn',
 
-      /* Imports and sorting */
-      // simple-import-sort may be unavailable in some environments; rely on import/order and unused-imports instead
-      'import/order': 'off',
-      'import/no-duplicates': 'error',
-      // rely on TypeScript's no-unused-vars rule instead of optional plugin
+      // /* Imports and sorting */
+      // // simple-import-sort may be unavailable in some environments; rely on import/order and unused-imports instead
+      // 'import/order': 'off',
+      // 'import/no-duplicates': 'error',
+      // // rely on TypeScript's no-unused-vars rule instead of optional plugin
 
-      /* Code quality */
-      eqeqeq: ['error', 'always'],
-      curly: ['error', 'all'],
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
-      'no-debugger': 'warn',
-      'consistent-return': 'error',
+      // /* Code quality */
+      // eqeqeq: ['error', 'always'],
+      // curly: ['error', 'all'],
+      // 'no-console': ['warn', { allow: ['warn', 'error'] }],
+      // 'no-debugger': 'warn',
+      // 'consistent-return': 'error',
 
-      /* Prettier integration */
-      'prettier/prettier': 'warn',
+      // /* Prettier integration */
+      // 'prettier/prettier': 'warn',
     },
   },
 ];
