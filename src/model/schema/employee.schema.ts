@@ -1,4 +1,4 @@
-import { model, models, Schema } from 'mongoose';
+import mongoose, { Schema, model } from 'mongoose';
 import { Employee, ROLE } from '~/types/employee.type';
 
 const DOCUMENT_NAME = 'Employee';
@@ -23,7 +23,7 @@ const EmployeeSchema = new Schema<Employee>(
   { collection: COLLECTION_NAME },
 );
 
-// Avoid OverwriteModelError by reusing existing model if present
-const EmployeeModel = models[DOCUMENT_NAME] || model(DOCUMENT_NAME, EmployeeSchema);
+// Use mongoose.models safely (works when models may be undefined in certain envs)
+const EmployeeModel = mongoose.models?.[DOCUMENT_NAME] || model(DOCUMENT_NAME, EmployeeSchema);
 
 export default EmployeeModel;

@@ -1,82 +1,67 @@
 'use client';
 
 import { QRCodeSVG } from 'qrcode.react';
-import { useEffect, useState } from 'react';
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { useCallback, useEffect, useState } from 'react';
+import { useConnect, useDisconnect } from 'wagmi';
 import { useAppDispatch } from '~/store/hooks';
 import { closeWalletModal, setConnectedWallet } from '~/store/walletModalSlice';
 
 export default function QRCodeMethod() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [connectUri, setConnectUri] = useState<string>(''); // State to hold the connection URI
-  const { connectAsync, connectors, isPending, isSuccess } = useConnect();
+  const [connectUri, setConnectUri] = useState<string>('');
+  const { connectAsync, connectors } = useConnect();
   const walletConnectConnector = connectors.find((c: { id: string }) => c.id === 'walletConnect');
   const { disconnectAsync } = useDisconnect();
   const dispatch = useAppDispatch();
 
-  const isUriExpired = (uri: string) => {
-    const expTime = uri.split('expiryTimestamp=')[1];
-    if (expTime) {
-      return Date.now() > Number(expTime) * 1000;
+  const handleMessage = useCallback((event: { type: string; data?: unknown; uid: string }) => {
+    if (event.type === 'display_uri' && typeof event.data === 'string') {
+      console.log('Received connect URI:', event.data);
+      setConnectUri(event.data);
+      setIsLoading(false);
     }
-  };
-  useEffect(() => {
+  }, []);
 
+  const handleConnectSuccess = useCallback(async (data: any) => {
+    dispatch(setConnectedWallet(data.accounts[0]));
+    setTimeout(() => {
+      setIsLoading(false);
+      dispatch(closeWalletModal());
+    }, 1000);
+  }, []);
+
+  useEffect(() => {
     if (!walletConnectConnector) {
       setError('There was an error to get the QR Code. Please try again later !');
       setIsLoading(false);
       return;
     }
-
-    const handleMessage = ({
-      type,
-      data,
-    }: (typeof walletConnectConnector.emitter.on.arguments)[0]) => {
-      if (type === 'display_uri') {
-        console.log('Received URI:', data);
-        setConnectUri(data);
-        setIsLoading(false);
-      }
-    };
-
-    const handleConnectSuccess = async (data: any) => {
-      console.log('Connected successfully with data:', data);
-      dispatch(setConnectedWallet(data.accounts[0]));
-      setTimeout(() => {
-        setIsLoading(false);
-        dispatch(closeWalletModal());
-      }, 1000);
-    };
-
-    const handleDisconnect = () => {
-      dispatch(setConnectedWallet(undefined));
-      console.log('Disconnected');
-    };
-
     walletConnectConnector.emitter.on('message', handleMessage);
     walletConnectConnector.emitter.on('connect', handleConnectSuccess);
-    walletConnectConnector.emitter.on('disconnect', handleDisconnect);
 
     (async () => {
       await disconnectAsync();
       await connectAsync({ connector: walletConnectConnector });
     })();
+
     return () => {
       walletConnectConnector.emitter.off('message', handleMessage);
       walletConnectConnector.emitter.off('connect', handleConnectSuccess);
-      walletConnectConnector.emitter.off('disconnect', handleDisconnect);
     };
   }, []);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsLoading(true);
     setError('');
-
-    // Simulate loading
-    setTimeout(() => {
+    setConnectUri('');
+    try {
+      await disconnectAsync();
+      await connectAsync({ connector: walletConnectConnector! });
+    } catch (err) {
+      setError('Failed to refresh the QR Code. Please try again.');
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (

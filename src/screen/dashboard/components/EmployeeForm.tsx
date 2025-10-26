@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAccount } from 'wagmi';
 import { axiosInstance } from '~/config/axios.config';
 import { useAppDispatch, useAppSelector } from '~/store/hooks';
 import { RootState } from '~/store/store';
@@ -21,6 +22,7 @@ export default function EmployeeForm() {
   const [empAddress, setEmpAddress] = useState<string>('');
   const [employeeName, setEmployeeName] = useState<string>('');
   const [formData, setFormData] = useState<any>({});
+  const { isConnected } = useAccount();
 
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,20 +35,24 @@ export default function EmployeeForm() {
       if (!employeeName) throw new Error('Employee name is required');
       if (role === ROLE.ADMIN && !adminSecret) throw new Error('Admin secret is required');
 
-      setFormData(()=> {
-        if( role === ROLE.ADMIN ) {
+      // include a submissionId so the effect can reliably detect a new submission
+      setFormData(() => {
+        const base = { submissionId: Date.now() } as any;
+        if (role === ROLE.ADMIN) {
           return {
-              secretKey: adminSecret,
-              adminAddress: empAddress,
-              adminName: employeeName,
+            ...base,
+            secretKey: adminSecret,
+            adminAddress: empAddress,
+            adminName: employeeName,
           };
         }
         return {
+          ...base,
           senderAddress: connectedWallet,
           employeeAddress: empAddress,
           employeeName: employeeName,
         };
-      })
+      });
 
       dispatch(openWalletModal());
     } catch (err: any) {
@@ -59,20 +65,20 @@ export default function EmployeeForm() {
 
   // when wallet becomes connected and empAddress is set, call contract
   useEffect(() => {
-    if (isWalletModalOpen) {
-      return;
-    }
-
-    if (!connectedWallet || !formData) return;
+    // Only proceed when the wallet modal is closed, wallet is connected,
+    // and we have a formData with a submissionId (to avoid accidental runs).
+    if (isWalletModalOpen) return;
+    if (!isConnected || !connectedWallet) return;
+    if (!formData || typeof formData !== 'object' || !('submissionId' in formData)) return;
 
     const execute = async () => {
       setLoading(true);
       setError('');
       try {
         console.log('Form data to submit:', formData);
-        const newEmployee = await axiosInstance
-          .post<Employee>(`${role}`, formData)
-          .then((res) => res.data);
+        const path = `/${role}`.replace('//', '/');
+        const resp = await axiosInstance.post<Employee>(path, formData);
+        const newEmployee = resp?.data;
         setSuccess(
           `Employee ${newEmployee.walletAddress} name ${newEmployee.name} added successfully!`,
         );
@@ -81,13 +87,17 @@ export default function EmployeeForm() {
         setFormData({});
       } catch (err: any) {
         console.error('Contract write failed:', err);
-        setError('Contract write failed: ' + (err?.message ?? String(err)));
+        // axios errors contain useful information in err.response.data
+        const serverMessage = err?.response?.data || err?.response?.data?.message;
+        const message = serverMessage || err?.message || String(err);
+        setError('Contract write failed: ' + message);
       } finally {
         setLoading(false);
       }
     };
 
     execute();
+    // only re-run when these change
   }, [isWalletModalOpen]);
 
   return (

@@ -11,27 +11,16 @@ import DashboardPage from '~/screen/dashboard/DashboardPage';
 export default function Home() {
   const activeIndex = useAppSelector((state) => state.navigation.activeIndex);
 
-  const renderPage = () => {
-    switch (activeIndex) {
-      case 0:
-        return <HomePage />;
-      case 1:
-        return <AttendancePage />;
-      case 2:
-        return <TrendPage />;
-      case 3:
-        return <ServicesPage />;
-      case 4:
-        return <DashboardPage />;
-      default:
-        return <HomePage />;
-    }
-  };
-
   return (
     <main className="min-h-screen bg-gradient-hero pt-20">
       <Header />
-      <div className="animate-fadeIn">{renderPage()}</div>
+      <div className="animate-fadeIn">
+        {activeIndex === 0 && <HomePage />}
+        {activeIndex === 1 && <AttendancePage />}
+        {activeIndex === 2 && <TrendPage />}
+        {activeIndex === 3 && <ServicesPage />}
+        {activeIndex === 4 && <DashboardPage />}
+      </div>
     </main>
   );
 }

@@ -13,7 +13,7 @@ export const POST = async (request: POSTAdminRequestBodyDTO) => {
     const newEmployee = await employeeService.addAdmin(reqBody);
     return new Response(JSON.stringify(newEmployee), { status: 201 });
   } catch (error: { code?: any; message?: string } | any) {
-    return new Response(error.message || 'Failed to create employee', {
+    return new Response(error.message || 'Failed to create admin', {
       status: error.code || 500,
     });
   }

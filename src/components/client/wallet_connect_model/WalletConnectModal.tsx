@@ -8,12 +8,9 @@ import MetaMaskMethod from '~/components/client/wallet_connect_model/MetaMaskMet
 import PrivateKeyMethod from '~/components/client/wallet_connect_model/PrivateKeyMethod';
 import { Log } from 'viem';
 import CoinbaseMethod from './CoinbaseMethod';
+import { WalletMethod } from '~/types/wallet-connect-methods';
+import { CONNECT_MODEL_CONSTANTS } from '~/config/constants/connect-model.const';
 
-type WalletMethod = 'QRCodeMethod' | 'MetaMaskMethod' | 'CoinbaseMethod' | 'PrivateKeyMethod';
-
-interface IWalletConnectModalProps {
-  executeContract?: (params: any) => Promise<string | Log[]>;
-}
 
 export default function WalletConnectModal() {
   const dispatch = useAppDispatch();
@@ -29,49 +26,7 @@ export default function WalletConnectModal() {
   const handleMethodSelect = (method: WalletMethod) => {
     setSelectedMethod(method);
   };
-
-  const renderMethodComponent = () => {
-    switch (selectedMethod) {
-      case 'QRCodeMethod':
-        return <QRCodeMethod />;
-      case 'MetaMaskMethod':
-        return <MetaMaskMethod />;
-      case 'CoinbaseMethod':
-        return <CoinbaseMethod />;
-      case 'PrivateKeyMethod':
-        return <PrivateKeyMethod />;
-      default:
-        return <QRCodeMethod />;
-    }
-  };
-
-  const methods = [
-    {
-      id: 'QRCodeMethod' as WalletMethod,
-      name: 'QR Code',
-      icon: '📱',
-      disabled: false,
-    },
-    {
-      id: 'MetaMaskMethod' as WalletMethod,
-      name: 'MetaMask',
-      icon: '🦊',
-      disabled: false,
-    },
-    {
-      id: 'CoinbaseMethod' as WalletMethod,
-      name: 'Coinbase',
-      icon: '💙',
-      disabled: true,
-    },
-    {
-      id: 'PrivateKeyMethod' as WalletMethod,
-      name: 'Private Key',
-      icon: '🔑',
-      disabled: true,
-    },
-  ];
-
+  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
       <div
@@ -106,14 +61,19 @@ export default function WalletConnectModal() {
           </button>
         </div>
 
-        <div className="min-h-[320px] bg-gray-50">{renderMethodComponent()}</div>
+        <div className="min-h-[320px] bg-gray-50">
+          {selectedMethod === 'QRCodeMethod' && <QRCodeMethod />}{' '}
+          {selectedMethod === 'MetaMaskMethod' && <MetaMaskMethod />}{' '}
+          {selectedMethod === 'CoinbaseMethod' && <CoinbaseMethod />}{' '}
+          {selectedMethod === 'PrivateKeyMethod' && <PrivateKeyMethod />}
+        </div>
 
         <div className="bg-white border-t-2 border-gray-200 p-4">
           <p className="text-xs text-gray-500 mb-3 text-center font-medium">
             Choose connection method:
           </p>
           <div className="grid grid-cols-4 gap-2">
-            {methods.map((method) => (
+            {CONNECT_MODEL_CONSTANTS.SUPPORTED_METHODS.map((method) => (
               <button
                 key={method.id}
                 onClick={() => !method.disabled && handleMethodSelect(method.id)}
